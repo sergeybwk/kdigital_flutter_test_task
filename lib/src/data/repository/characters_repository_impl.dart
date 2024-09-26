@@ -1,8 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
 
-import 'package:kdigital_test/src/data/models/character.dart';
+import 'package:kdigital_test/src/domain/models/character.dart';
 import 'package:kdigital_test/src/data/repository/characters_repository.dart';
 import 'package:http/http.dart';
 
@@ -13,26 +12,24 @@ class CharactersRepositoryImpl implements CharactersRepository {
 
   @override
   Future<List<Character>?> getCharacters(int page) async {
-    var client = Client();
-    final charResult = await client.get(
-      Uri.parse("https://rickandmortyapi.com/api/character/?page=$page"),
-    );
-    final jsonMap = await json.decode(charResult.body) as Map<String, dynamic>;
-
-    final bool showMockedError = Random().nextBool();
-    print("Kdigital test log: showMockedError = $showMockedError");
-    if (showMockedError) {
-      return Future.delayed(
-        const Duration(seconds: 5),
-        () => null,
+    Response charResult;
+    try {
+      charResult = await client.get(
+        Uri.parse("https://rickandmortyapi.com/api/character/?page=$page"),
       );
+    } catch (_) {
+      return null;
     }
-    return Future.value(
-      List.of(
+    final jsonMap = json.decode(charResult.body) as Map<String, dynamic>;
+
+    if (jsonMap["results"] != null) {
+      return List.of(
         (jsonMap["results"] as List<dynamic>).map(
           (value) => Character.fromJson(value),
         ),
-      ),
-    );
+      );
+    } else {
+      return [];
+    }
   }
 }
